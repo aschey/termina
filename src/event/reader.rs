@@ -63,6 +63,11 @@ impl EventReader {
         let mut reader = self.shared.lock();
         reader.read(filter)
     }
+
+    pub fn drain(&self) -> io::Result<()> {
+        let mut reader = self.shared.lock();
+        reader.drain()
+    }
 }
 
 #[derive(Debug)]
@@ -128,5 +133,9 @@ impl Shared {
             }
             let _ = self.poll(None, &mut filter)?;
         }
+    }
+
+    fn drain(&mut self) -> io::Result<()> {
+        self.source.drain()
     }
 }
