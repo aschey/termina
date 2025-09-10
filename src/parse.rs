@@ -24,8 +24,9 @@ use crate::{
     style, Event,
 };
 
+/// A parser for ANSI escape sequences.
 #[derive(Debug)]
-pub(crate) struct Parser {
+pub struct Parser {
     buffer: Vec<u8>,
     /// Events which have been parsed. Pop out with `Self::pop`.
     events: VecDeque<Event>,
@@ -46,8 +47,10 @@ impl Parser {
         self.events.pop_front()
     }
 
-    // NOTE: Windows is handled in the `windows` module below.
-    #[cfg(unix)]
+    /// Parses additional data into the buffer.
+    /// Parsed events can be retrieved using [Parser::pop].
+    ///
+    /// `maybe_more` should be set to true if the input might be a partial sequence.
     pub fn parse(&mut self, bytes: &[u8], maybe_more: bool) {
         self.buffer.extend_from_slice(bytes);
         self.process_bytes(maybe_more);
@@ -96,7 +99,7 @@ mod windows {
     use super::*;
 
     impl Parser {
-        pub fn decode_input_records(&mut self, records: &[Console::INPUT_RECORD]) {
+        pub(crate) fn decode_input_records(&mut self, records: &[Console::INPUT_RECORD]) {
             for record in records {
                 match record.EventType as u32 {
                     Console::KEY_EVENT => {
