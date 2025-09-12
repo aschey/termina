@@ -1492,6 +1492,13 @@ mod test {
             "\x1b[23;0t",
             Csi::Window(Box::new(Window::PopIconAndWindowTitle)).to_string(),
         );
+
+        // Set the cursor style to the terminal's default.
+        // <https://terminalguide.namepad.de/seq/csi_sq_t_space/>
+        assert_eq!(
+            "\x1b[0 q",
+            Csi::Cursor(Cursor::CursorStyle(CursorStyle::Default)).to_string()
+        );
     }
 
     #[test]
