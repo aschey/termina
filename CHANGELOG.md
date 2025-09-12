@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## [Unreleased] -->
 
+## [v0.1.1] - 2025-09-12
+
+### Added
+
+* Expose the `Parser` type ([#12](https://github.com/helix-editor/termina/pull/12))
+
+### Fixed
+
+* Fix overflowing subtraction on large mouse positions without SGRMouse enabled ([#11](https://github.com/helix-editor/termina/pull/11))
+* Fix Illumos build by avoiding compiling macOS-specific polling functions ([#13](https://github.com/helix-editor/termina/pull/13))
+
 ## [v0.1.0] - 2025-08-31
 
 ### Added
