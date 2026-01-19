@@ -21,12 +21,19 @@ pub enum Csi {
     /// "Select Graphics Rendition" (SGR).
     /// These sequences affect how the cell is rendered by the terminal.
     Sgr(Sgr),
+    /// Manipulate the cursor state and position.
     Cursor(Cursor),
+    /// Manipulate text content and position.
     Edit(Edit),
+    /// Query and set modes that modify the terminal state.
     Mode(Mode),
+    /// Terminal response to a mouse report command.
     Mouse(MouseReport),
+    /// Query and modify the Kitty keyboard protocol state.
     Keyboard(Keyboard),
+    /// Query for device attributes.
     Device(Device),
+    /// Query and manipulate the window state.
     Window(Box<Window>),
 }
 
@@ -326,9 +333,9 @@ impl Display for Sgr {
 /// the total number of bytes needed to describe multiple SGR changes, giving the terminal less
 /// work to do in terms of parsing.
 ///
-/// Note that if no attributes are set (`SgrAttributes::default`) the terminal will treat the
-/// escape the same as `Sgr::Reset`. So if you are using this type you may wish to compare the
-/// attributes you've built with `SgrAttributes::default()` to decide whether or not you want to
+/// Note that if no attributes are set ([`SgrAttributes::default`]) the terminal will treat the
+/// escape the same as [`Sgr::Reset`]. So if you are using this type you may wish to compare the
+/// attributes you've built with [`SgrAttributes::default()`] to decide whether or not you want to
 /// write it to the terminal. Otherwise the escape codes for this type do not reset SGR. The
 /// example below sets a green foreground and bold intensity but would not affect any other SGR
 /// settings like underline or background color.
@@ -371,7 +378,7 @@ pub struct SgrAttributes {
     ///
     /// The number of parameters taken to describe a modifier varies by modifier. True-color
     /// colors (foreground, background, underline color) take the most while simple modifiers like
-    /// `SgrModifiers::ITALIC` take just one.
+    /// [`SgrModifiers::ITALIC`] take just one.
     pub parameter_chunk_size: NonZeroU16,
 }
 
@@ -390,8 +397,8 @@ impl Default for SgrAttributes {
 impl SgrAttributes {
     /// Returns `true` if no attributes are set, `false` otherwise.
     ///
-    /// When empty attributes are displayed they produce the same escape sequence as `Sgr::Reset`.
-    /// If you are building attributes incrementally starting with `SgrAttributes::default()` then
+    /// When empty attributes are displayed they produce the same escape sequence as [`Sgr::Reset`].
+    /// If you are building attributes incrementally starting with [`SgrAttributes::default()`] then
     /// you may wish to check whether the attributes are empty to decide whether or not you should
     /// write them to the terminal.
     ///
@@ -458,30 +465,38 @@ impl Default for SgrModifiers {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Cursor {
-    /// CBT Moves cursor to the Ps tabs backward. The default value of Ps is 1.
+    /// [CBT](https://vt100.net/docs/vt510-rm/CBT.html) - Cursor Backward Tabulation
+    ///
+    ///  Moves cursor to the Ps tabs backward. The default value of Ps is 1.
     BackwardTabulation(u32),
 
-    /// TBC - TABULATION CLEAR
+    /// [TBC](https://vt100.net/docs/vt510-rm/TBC.html) - Tabulation Clear
     TabulationClear(TabulationClear),
 
-    /// CHA: Moves cursor to the Ps-th column of the active line. The default
+    /// [CHA](https://vt100.net/docs/vt510-rm/CHA.html) - Cursor Horizontal Absolute
+    ///
+    ///  Moves cursor to the Ps-th column of the active line. The default
     /// value of Ps is 1.
     CharacterAbsolute(OneBased),
 
-    /// HPA CHARACTER POSITION ABSOLUTE
+    /// [HPA](https://vt100.net/docs/vt510-rm/HPA.html) - Horizontal Position Absolute
+    ///
     /// HPA Moves cursor to the Ps-th column of the active line. The default
     /// value of Ps is 1.
     CharacterPositionAbsolute(OneBased),
 
-    /// HPB - CHARACTER POSITION BACKWARD
+    /// HPB - Horizontal Position Backward
+    ///
     /// HPB Moves cursor to the left Ps columns. The default value of Ps is 1.
     CharacterPositionBackward(u32),
 
-    /// HPR - CHARACTER POSITION FORWARD
+    /// [HPR](https://vt100.net/docs/vt510-rm/HPR.html) - Horizontal Position relative
+    ///
     /// HPR Moves cursor to the right Ps columns. The default value of Ps is 1.
     CharacterPositionForward(u32),
 
-    /// HVP - CHARACTER AND LINE POSITION
+    /// [HVP](https://vt100.net/docs/vt510-rm/HVP.html) - Horizontal and Vertical Position
+    ///
     /// HVP Moves cursor to the Ps1-th line and to the Ps2-th column. The
     /// default value of Ps1 and Ps2 is 1.
     CharacterAndLinePosition {
@@ -489,34 +504,43 @@ pub enum Cursor {
         col: OneBased,
     },
 
-    /// VPA - LINE POSITION ABSOLUTE
+    /// [VPA](https://vt100.net/docs/vt510-rm/VPA.html) - Vertical Line Position Absolute
+    ///
     /// Move to the corresponding vertical position (line Ps) of the current
     /// column. The default value of Ps is 1.
     LinePositionAbsolute(u32),
 
-    /// VPB - LINE POSITION BACKWARD
+    /// VPB - Vertical Position Backward
+    ///
     /// Moves cursor up Ps lines in the same column. The default value of Ps is
     /// 1.
     LinePositionBackward(u32),
 
-    /// VPR - LINE POSITION FORWARD
+    /// [VPR](https://vt100.net/docs/vt510-rm/VPR.html) - Vertical Position Forward
+    ///
     /// Moves cursor down Ps lines in the same column. The default value of Ps
     /// is 1.
     LinePositionForward(u32),
 
-    /// CHT
+    /// [CHT](https://vt100.net/docs/vt510-rm/CHT.html) - Cursor Horizontal Forward Tabulation
+    ///
     /// Moves cursor to the Ps tabs forward. The default value of Ps is 1.
     ForwardTabulation(u32),
 
+    /// [CNL](https://vt100.net/docs/vt510-rm/CNL.html) - Cursor Next Line
+    ///
     /// CNL Moves cursor to the first column of Ps-th following line. The
     /// default value of Ps is 1.
     NextLine(u32),
 
+    /// [CPL](https://vt100.net/docs/vt510-rm/CPL.html) - Cursor Previous Line
+    ///
     /// CPL Moves cursor to the first column of Ps-th preceding line. The
     /// default value of Ps is 1.
     PrecedingLine(u32),
 
-    /// CPR - ACTIVE POSITION REPORT
+    /// Response to [CPR](https://vt100.net/docs/vt510-rm/CPR.html) - Cursor Position Report
+    ///
     /// If the DEVICE COMPONENT SELECT MODE (DCSM)
     /// is set to PRESENTATION, CPR is used to report the active presentation
     /// position of the sending device as residing in the presentation
@@ -534,37 +558,41 @@ pub enum Cursor {
         line: OneBased,
         col: OneBased,
     },
-
-    /// CPR: this is the request from the client.
-    /// The terminal will respond with ActivePositionReport.
+    /// [CPR](https://vt100.net/docs/vt510-rm/CPR.html) - Cursor Position Report
+    ///
+    /// The terminal will respond with an [ActivePositionReport](Cursor::ActivePositionReport).
     RequestActivePositionReport,
 
-    /// SCP - Save Cursor Position.
-    /// Only works when DECLRMM is disabled
+    /// SCP - Save Cursor Position
+    ///
+    /// Only works when [DECLRMM](DecPrivateModeCode::LeftRightMarginMode) is disabled
     SaveCursor,
     RestoreCursor,
 
-    /// CTC - CURSOR TABULATION CONTROL
+    /// CTC - Cursor Tabulation Control
+    ///
     /// CTC causes one or more tabulation stops to be set or cleared in the
     /// presentation component, depending on the parameter values.
     /// In the case of parameter values 0, 2 or 4 the number of lines affected
     /// depends on the setting of the TABULATION STOP MODE (TSM).
     TabulationControl(CursorTabulationControl),
 
-    /// CUB - Cursor Left
+    /// [CUB](https://vt100.net/docs/vt510-rm/CUB.html) - Cursor Backward
+    ///
     /// Moves cursor to the left Ps columns. The default value of Ps is 1.
     Left(u32),
 
-    /// CUD - Cursor Down
+    /// [CUD](https://vt100.net/docs/vt510-rm/CUD.html) - Cursor Down
     Down(u32),
 
-    /// CUF - Cursor Right
+    /// [CUF](https://vt100.net/docs/vt510-rm/CUF.html) - Cursor Forward
     Right(u32),
 
-    /// CUU - Cursor Up
+    /// [CUU](https://vt100.net/docs/vt510-rm/CUU.html) - Cursor Up
     Up(u32),
 
-    /// CUP - Cursor Position
+    /// [CUP](https://vt100.net/docs/vt510-rm/CUP.html) - Cursor Position
+    ///
     /// Moves cursor to the Ps1-th line and to the Ps2-th column. The default
     /// value of Ps1 and Ps2 is 1.
     Position {
@@ -573,19 +601,20 @@ pub enum Cursor {
     },
 
     /// CVT - Cursor Line Tabulation
+    ///
     /// CVT causes the active presentation position to be moved to the
     /// corresponding character position of the line corresponding to the n-th
     /// following line tabulation stop in the presentation component, where n
     /// equals the value of Pn.
     LineTabulation(u32),
 
-    /// DECSTBM - Set top and bottom margins.
+    /// [DECSTBM](https://vt100.net/docs/vt510-rm/DECSTBM.html) - Set Top and Bottom Margins
     SetTopAndBottomMargins {
         top: OneBased,
         bottom: OneBased,
     },
 
-    /// <https://vt100.net/docs/vt510-rm/DECSLRM.html>
+    /// [DECSLRM](https://vt100.net/docs/vt510-rm/DECSLRM.html) - Set Left and Right Margins
     SetLeftAndRightMargins {
         left: OneBased,
         right: OneBased,
@@ -844,30 +873,45 @@ pub enum EraseInDisplay {
     EraseScrollback = 3,
 }
 
-// Mode
-
+/// Escape sequences that can be used to query the terminal state or send commands
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mode {
+    /// DECSET - Set (enable) a [DEC](https://vt100.net/dec/) mode.
     SetDecPrivateMode(DecPrivateMode),
+    /// DECRST - Reset (disable) a [DEC](https://vt100.net/dec/) mode.
     ResetDecPrivateMode(DecPrivateMode),
+    /// XTSAVE - Save the state of the given [DEC](https://vt100.net/dec/) mode
+    /// so it can be restored later. Not supported on some modern terminals
+    /// and [DECSET](Mode::SetDecPrivateMode) is generally preferred.
     SaveDecPrivateMode(DecPrivateMode),
+    /// XTRESTORE - Restore the state of the given [DEC](https://vt100.net/dec/) mode
+    /// if XTSAVE was used previously. Not supported on some modern terminals
+    /// and [DECRST](Mode::ResetDecPrivateMode) is generally preferred.
     RestoreDecPrivateMode(DecPrivateMode),
-    // <https://vt100.net/docs/vt510-rm/DECRQM.html>
+    /// [DECRQM](https://vt100.net/docs/vt510-rm/DECRQM.html) - Request mode
+    ///
+    /// Query the terminal to see if a particular mode is set.
     QueryDecPrivateMode(DecPrivateMode),
-    // <https://vt100.net/docs/vt510-rm/DECRPM.html>
+    /// [DECRPM](https://vt100.net/docs/vt510-rm/DECRPM.html) - Report mode
+    ///
+    /// A response to a [DECRQM](Mode::QueryDecPrivateMode) query.
     ReportDecPrivateMode {
         mode: DecPrivateMode,
         setting: DecModeSetting,
     },
+    /// Set (enable) a mode.
     SetMode(TerminalMode),
+    /// Reset (disable) a mode.
     ResetMode(TerminalMode),
+    /// Query the terminal to see if a particular mode is set.
     QueryMode(TerminalMode),
     XtermKeyMode {
         resource: XtermKeyModifierResource,
         value: Option<i64>,
     },
-    // <https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md>
+    /// [Query the current terminal theme](https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md) (dark/light)
     QueryTheme,
+    /// Response to [QueryTheme](Mode::QueryTheme)
     ReportTheme(ThemeMode),
 }
 
@@ -916,48 +960,72 @@ impl Display for DecPrivateMode {
     }
 }
 
+/// [Parameters](https://vt100.net/emu/dec_private_modes.html) used in DEC Set Mode (SM) and Reset Mode (SM).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DecPrivateModeCode {
-    /// <https://vt100.net/docs/vt510-rm/DECCKM.html>
-    /// This mode is only effective when the terminal is in keypad application mode (see DECKPAM)
-    /// and the ANSI/VT52 mode (DECANM) is set (see DECANM). Under these conditions, if the cursor
-    /// key mode is reset, the four cursor function keys will send ANSI cursor control commands. If
-    /// cursor key mode is set, the four cursor function keys will send application functions.
+    /// [DECCKM](https://vt100.net/docs/vt510-rm/DECCKM.html) - Cursor Keys Mode
+    ///
+    /// This mode is only effective when the terminal is in keypad application mode (see
+    /// [DECKPAM](https://vt100.net/docs/vt510-rm/DECKPAM.html))
+    /// and the ANSI/VT52 mode (DECANM) is set (see [DECANM](DecPrivateModeCode::DecAnsiMode)).
+    /// Under these conditions, if the cursor key mode is reset, the four cursor function keys
+    /// will send ANSI cursor control commands. If cursor key mode is set, the four cursor function
+    /// keys will send application functions.
     ApplicationCursorKeys = 1,
 
-    /// <https://vt100.net/docs/vt510-rm/DECANM.html>
+    /// [DECANM](https://vt100.net/docs/vt510-rm/DECANM.html) - ANSI Mode
+    ///
     /// Behave like a vt52
     DecAnsiMode = 2,
 
-    /// <https://vt100.net/docs/vt510-rm/DECCOLM.html>
+    /// [DECCOLM](https://vt100.net/docs/vt510-rm/DECCOLM.html) - Columns per Page
+    ///
+    /// When set, 132 columns are used. When reset, 80 columns are used.
+    /// Mainly used for legacy applications - [DECSCPP](https://vt100.net/docs/vt510-rm/DECSCPP.html)
+    /// is preferred.
     Select132Columns = 3,
-    /// <https://vt100.net/docs/vt510-rm/DECSCLM.html>
+    /// [DECSCLM](https://vt100.net/docs/vt510-rm/DECSCLM.html) - Scrolling Mode
     SmoothScroll = 4,
-    /// <https://vt100.net/docs/vt510-rm/DECSCNM.html>
+    /// [DECSCNM](https://vt100.net/docs/vt510-rm/DECSCNM.html) - Screen Mode
+    ///
+    /// When set, the screen displays dark characters on a light background.
+    /// When reset, the screen displays light characters on a dark background.
     ReverseVideo = 5,
-    /// <https://vt100.net/docs/vt510-rm/DECOM.html>
+    /// [DECOM](https://vt100.net/docs/vt510-rm/DECOM.html) - Origin Mode
+    ///
     /// When OriginMode is enabled, cursor is constrained to the
     /// scroll region and its position is relative to the scroll
     /// region.
     OriginMode = 6,
-    /// <https://vt100.net/docs/vt510-rm/DECAWM.html>
-    /// When enabled, wrap to next line, Otherwise replace the last
-    /// character
+    /// [DECAWM](https://vt100.net/docs/vt510-rm/DECAWM.html) - Auto-wrap Mode
+    ///
+    /// When set, overflowing text wraps to the next line.
+    /// When reset, overflowing text replaces the last character.
     AutoWrap = 7,
-    /// <https://vt100.net/docs/vt510-rm/DECARM.html>
+    /// [DECARM](https://vt100.net/docs/vt510-rm/DECARM.html) - Auto-repeat Mode
+    ///
+    /// When set, most keys that are held down will repeatedly send a key press event.
     AutoRepeat = 8,
+    /// [Start blinking cursor](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_)
     StartBlinkingCursor = 12,
+    /// [DECTCEM](https://vt100.net/docs/vt510-rm/DECTCEM.html) - text cursor enable
     ShowCursor = 25,
-
+    /// [XTREVWRAP](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Functions-using-CSI-_-ordered-by-the-final-character_s_) -
+    /// Reverse wraparound mode
     ReverseWraparound = 45,
 
-    /// <https://vt100.net/docs/vt510-rm/DECLRMM.html>
+    /// [DECLRMM](https://vt100.net/docs/vt510-rm/DECLRMM.html) - Left Right Margin Mode
     LeftRightMarginMode = 69,
 
-    /// DECSDM - <https://vt100.net/dec/ek-vt38t-ug-001.pdf#page=132>
+    // [DECSDM](https://vt100.net/dec/ek-vt38t-ug-001.pdf#page=132) - Sixel Display Mode
     SixelDisplayMode = 80,
     /// Enable mouse button press/release reporting
     MouseTracking = 1000,
+    /// [Highlight (hilite) mouse tracking](https://www.x.org/docs/xterm/ctlseqs.pdf) -
+    /// notifies a program of a button press, receives a range of lines from the program, highlights the
+    /// region covered by the mouse within that range until button release, and then sends the program
+    /// the release coordinates.
+    ///
     /// Warning: this requires a cooperative and timely response from
     /// the application otherwise the terminal can hang
     HighlightMouseTracking = 1001,
@@ -967,29 +1035,42 @@ pub enum DecPrivateModeCode {
     AnyEventMouse = 1003,
     /// Enable FocusIn/FocusOut events
     FocusTracking = 1004,
+    /// Legacy protocol created by xterm to enable
+    /// [extended coordinates](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates)
+    /// for mouse tracking. [SGRMouse](DecPrivateModeCode::SGRMouse) is
+    /// supported by most modern terminals and is preferred over this.
     Utf8Mouse = 1005,
-    /// Use extended coordinate system in mouse reporting.  Does not
-    /// enable mouse reporting itself, it just controls how reports
+    /// Use [extended coordinate](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates)
+    /// system in mouse reporting.  Does not enable mouse reporting itself, it just controls how reports
     /// will be encoded.
     SGRMouse = 1006,
+    /// Legacy protocol created by RXVT to enable
+    /// [extended coordinates](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Extended-coordinates)
+    /// for mouse tracking. [SGRMouse](DecPrivateModeCode::SGRMouse) is
+    /// supported by almost all modern terminals and is preferred over this.
     RXVTMouse = 1015,
     /// Use pixels rather than text cells in mouse reporting.  Does
     /// not enable mouse reporting itself, it just controls how
     /// reports will be encoded.
     SGRPixelsMouse = 1016,
-
+    /// Send ESC when Meta modifies a key
     XTermMetaSendsEscape = 1036,
+    /// Send ESC when Alt modifies a key
     XTermAltSendsEscape = 1039,
 
-    /// Save cursor as in DECSC
+    /// If set, save cursor. If reset, restore cursor.
+    /// Similar to [DECSC](https://vt100.net/docs/vt510-rm/DECSC.html)
     SaveCursor = 1048,
+    /// Combination of [OptEnableAlternateScreen](DecPrivateModeCode::OptEnableAlternateScreen)
+    /// and [SaveCursor](DecPrivateModeCode::SaveCursor)
     ClearAndEnableAlternateScreen = 1049,
+    /// Use the alternate screen buffer
     EnableAlternateScreen = 47,
+    /// Use the alternate screen buffer
     OptEnableAlternateScreen = 1047,
     BracketedPaste = 2004,
 
-    /// <https://github.com/contour-terminal/terminal-unicode-core/>
-    /// Grapheme clustering mode
+    /// [Grapheme Clustering Mode](https://github.com/contour-terminal/terminal-unicode-core)
     GraphemeClustering = 2027,
 
     /// <https://github.com/contour-terminal/contour/blob/master/docs/vt-extensions/color-palette-update-notifications.md>
@@ -1006,8 +1087,7 @@ pub enum DecPrivateModeCode {
     /// xterm: adjust cursor positioning after emitting sixel
     SixelScrollsRight = 8452,
 
-    /// Windows Terminal: win32-input-mode
-    /// <https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md>
+    /// Windows Terminal: [win32-input-mode](https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md)
     Win32InputMode = 9001,
 }
 
@@ -1027,18 +1107,27 @@ impl Display for TerminalMode {
     }
 }
 
+/// Terminal commands that are not in the DEC family
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TerminalModeCode {
-    /// <https://vt100.net/docs/vt510-rm/KAM.html>
+    /// [KAM - Keyboard action mode](https://vt100.net/docs/vt510-rm/KAM.html)
+    ///
+    /// Locks or unlocks the keyboard
     KeyboardAction = 2,
-    /// <https://vt100.net/docs/vt510-rm/IRM.html>
+    /// [IRM - Insert/replace mode](https://vt100.net/docs/vt510-rm/IRM.html)
+    ///
+    /// If reset, new characters replace the character at the cursor position
     Insert = 4,
-    /// <<https://terminal-wg.pages.freedesktop.org/bidi/recommendation/escape-sequences.html>>
+    /// [Bi-directional text mode](https://terminal-wg.pages.freedesktop.org/bidi/recommendation/escape-sequences.html)
+    ///
+    /// This is a draft proposal and not widely supported.
     BiDirectionalSupportMode = 8,
-    /// <https://vt100.net/docs/vt510-rm/SRM.html>
-    /// But in the MS terminal this is cursor blinking.
+    /// [SRM - Send/receive mode](https://vt100.net/docs/vt510-rm/SRM.html)
+    ///
+    /// Makes the terminal send input to the host only.
+    /// In the MS terminal this is cursor blinking.
     SendReceive = 12,
-    /// <https://vt100.net/docs/vt510-rm/LNM.html>
+    /// [LNM - Line feed/new line mode](https://vt100.net/docs/vt510-rm/LNM.html)
     AutomaticNewline = 20,
     /// MS terminal cursor visibility
     ShowCursor = 25,
@@ -1285,14 +1374,22 @@ impl Display for SetKeyboardFlagsMode {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Device {
+    /// Device attributes response
     DeviceAttributes(()),
-    /// DECSTR - <https://vt100.net/docs/vt510-rm/DECSTR.html>
+    /// [DECSTR - Soft terminal reset](https://vt100.net/docs/vt510-rm/DECSTR.html)
     SoftReset,
+    /// [DA1 - Primary device attributes](https://vt100.net/docs/vt510-rm/DA1.html)
     RequestPrimaryDeviceAttributes,
+    /// [DA2 - Secondary device attributes](https://vt100.net/docs/vt510-rm/DA2.html)
     RequestSecondaryDeviceAttributes,
+    /// [DA3 - Tertiary device attributes](https://vt100.net/docs/vt510-rm/DA3.html)
     RequestTertiaryDeviceAttributes,
+    /// [DSR - Device status report](https://vt100.net/docs/vt510-rm/DSR.html)
     StatusReport,
+    /// Terminal identification request
+    ///
     /// <https://github.com/mintty/mintty/issues/881>
+    ///
     /// <https://gitlab.gnome.org/GNOME/vte/-/issues/235>
     RequestTerminalNameAndVersion,
     RequestTerminalParameters(i64),
@@ -1313,11 +1410,14 @@ impl Display for Device {
     }
 }
 
-// Window
-
+/// Window manipulation.
+///
+/// The source for many of these can be found in the [dtterm](https://man.freebsd.org/cgi/man.cgi?query=dtterm&sektion=5&manpath=FreeBSD+12.1-RELEASE+and+Ports) man page.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Window {
+    /// Restore window
     DeIconify,
+    /// Minimize window
     Iconify,
     MoveWindow {
         x: i64,
@@ -1362,7 +1462,7 @@ pub enum Window {
     PopIconAndWindowTitle,
     PopIconTitle,
     PopWindowTitle,
-    /// DECRQCRA; used by esctest
+    /// [DECRQCRA](https://vt100.net/docs/vt510-rm/DECRQCRA.html); used by esctest
     ChecksumRectangularArea {
         request_id: i64,
         page_number: i64,
